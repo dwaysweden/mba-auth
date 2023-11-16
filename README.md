@@ -11,7 +11,7 @@ Find and replace all on all files (CMD+SHIFT+F):
 
 [![npm version][npm-version-src]][npm-version-href]
 [![npm downloads][npm-downloads-src]][npm-downloads-href]
-[![License][license-src]][https://github.com/dwaysweden/mba-auth/blob/main/LICENSE]
+[![License][license-src]][license-href]
 [![Nuxt][nuxt-src]][nuxt-href]
 
 New Nuxt module for authentication between nuxt and directus.
