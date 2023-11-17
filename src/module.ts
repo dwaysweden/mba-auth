@@ -26,7 +26,7 @@ export default defineNuxtModule<ModuleOptions>({
 
   defaults: {
     rest: {
-      baseUrl: 'http://localhost:8085',
+      baseUrl: 'http://localhost:8055',
       nuxtBaseUrl: 'http://localhost:3000'
     },
     graphql: {
