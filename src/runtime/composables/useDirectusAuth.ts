@@ -50,6 +50,7 @@ export default function useDirectusAuth<DirectusSchema extends object>() {
   }
 
   async function fetchUser() {
+    // @ts-ignore
     const fields = config.auth.userFields || ['*']
     try {
       // @ts-ignore

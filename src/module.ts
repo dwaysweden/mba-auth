@@ -39,6 +39,7 @@ export default defineNuxtModule<ModuleOptions>({
       enableGlobalAuthMiddleware: false,
       refreshTokenCookieName: 'auth_refresh_token',
       accessTokenCookieName: 'auth_token',
+      cookieSecure: false,
       redirect: {
         home: '/',
         login: '/auth/login',

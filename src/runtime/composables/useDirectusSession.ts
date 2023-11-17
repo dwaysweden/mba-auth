@@ -27,7 +27,7 @@ export default function () {
 
   const accessTokenCookie = useCookie(accessTokenCookieName, {
     sameSite: 'lax',
-    secure: true
+    secure: config.auth.cookieSecure || true
   })
 
   const _accessToken = {
