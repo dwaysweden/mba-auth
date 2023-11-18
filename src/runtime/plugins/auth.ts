@@ -25,15 +25,15 @@ export default defineNuxtPlugin(async (nuxtApp) => {
 
     addRouteMiddleware('guest', guest)
 
-    const initialized = useState('directus-auth-initialized', () => false)
+    const initialized = useState('auth-initialized', () => false)
 
-    const { _loggedIn } = useDirectusSession()
+    const { _loggedIn, _refreshToken, _accessToken, refresh } =
+      useDirectusSession()
 
     if (initialized.value === false) {
       const { path } = useRoute()
 
       const { fetchUser } = useDirectusAuth()
-      const { _refreshToken, _accessToken, refresh } = useDirectusSession()
 
       if (_accessToken.get()) {
         await fetchUser()
@@ -56,7 +56,7 @@ export default defineNuxtPlugin(async (nuxtApp) => {
 
     if (user.value) {
       _loggedIn.set(true)
-      await nuxtApp.callHook('directus:loggedIn', true)
+      await nuxtApp.callHook('auth:loggedIn', true)
     } else {
       _loggedIn.set(false)
     }

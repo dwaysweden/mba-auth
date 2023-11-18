@@ -23,11 +23,17 @@ export default function () {
   const accessTokenCookieName = config.auth.accessTokenCookieName
   const refreshTokenCookieName = config.auth.refreshTokenCookieName
   const msRefreshBeforeExpires = config.auth.msRefreshBeforeExpires
-  const loggedInName = 'directus_logged_in'
+  const expiresCookieName = config.auth.expiresCookieName
+  const loggedInName = 'auth_logged_in'
 
   const accessTokenCookie = useCookie(accessTokenCookieName, {
     sameSite: 'lax',
-    secure: config.auth.cookieSecure || true
+    secure: config.auth.cookieSecure ?? true
+  })
+
+  const expiresCookie = useCookie(expiresCookieName, {
+    sameSite: 'lax',
+    secure: config.auth.cookieSecure ?? true
   })
 
   const _accessToken = {
@@ -50,6 +56,26 @@ export default function () {
     }
   }
 
+  const _expires = {
+    get: () =>
+      process.server
+        ? event.context[expiresCookieName] || expiresCookie.value
+        : expiresCookie.value,
+    set: (value: number) => {
+      if (process.server) {
+        event.context[expiresCookieName] = value.toString()
+      }
+      expiresCookie.value = value.toString()
+    },
+    clear: () => {
+      if (process.server) {
+        deleteCookie(event, expiresCookieName)
+      } else {
+        expiresCookie.value = null
+      }
+    }
+  }
+
   const _refreshToken = {
     get: () => process.server && getCookie(event, refreshTokenCookieName)
   }
@@ -61,8 +87,8 @@ export default function () {
   }
 
   async function refresh() {
-    const isRefreshOn = useState('directus-refresh-loading', () => false)
-    const user = useState('directus-user')
+    const isRefreshOn = useState('auth-refresh-loading', () => false)
+    const user = useState('user')
 
     if (isRefreshOn.value) {
       return
@@ -92,6 +118,7 @@ export default function () {
         }
         if (res._data) {
           _accessToken.set(res._data?.data.access_token)
+          _expires.set(res._data?.data.expires)
           _loggedIn.set(true)
         }
         isRefreshOn.value = false
@@ -124,5 +151,5 @@ export default function () {
     return expires < Date.now()
   }
 
-  return { refresh, getToken, _accessToken, _refreshToken, _loggedIn }
+  return { refresh, getToken, _accessToken, _refreshToken, _loggedIn, _expires }
 }

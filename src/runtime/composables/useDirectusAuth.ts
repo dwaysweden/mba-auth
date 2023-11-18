@@ -17,13 +17,13 @@ import type { Ref } from '#imports'
 
 export default function useDirectusAuth<DirectusSchema extends object>() {
   const user: Ref<Readonly<DirectusUser<DirectusSchema> | null>> = useState(
-    'directus-user',
+    'user',
     () => null
   )
 
   const config = useRuntimeConfig().public.directus
 
-  const { _accessToken, _loggedIn } = useDirectusSession()
+  const { _accessToken, _loggedIn, _expires } = useDirectusSession()
 
   async function login(email: string, password: string, otp?: string) {
     const { data } = await $fetch<AuthenticationData>('/auth/login', {
@@ -38,7 +38,7 @@ export default function useDirectusAuth<DirectusSchema extends object>() {
       }
     })
 
-    await _onLogin(data.access_token)
+    await _onLogin(data.access_token, data.expires)
   }
 
   async function logout() {
@@ -97,7 +97,7 @@ export default function useDirectusAuth<DirectusSchema extends object>() {
     return joinURL(config.rest.nuxtBaseUrl, path)
   }
 
-  function _onLogin(accessToken: string) {
+  function _onLogin(accessToken: string, expires: number) {
     const route = useRoute()
     const { callHook } = useNuxtApp()
 
@@ -105,13 +105,14 @@ export default function useDirectusAuth<DirectusSchema extends object>() {
     const redirectTo = returnToPath ?? config.auth.redirect.home
 
     _accessToken.set(accessToken)
+    _expires.set(expires)
     _loggedIn.set(true)
 
     // A workaround to insure access token cookie is set
     return new Promise((resolve) => {
       setTimeout(async () => {
         await fetchUser()
-        await callHook('directus:loggedIn', true)
+        await callHook('auth:loggedIn', true)
         await navigateTo(redirectTo)
         resolve(true)
       }, 100)
@@ -120,9 +121,10 @@ export default function useDirectusAuth<DirectusSchema extends object>() {
 
   async function _onLogout() {
     const { callHook } = useNuxtApp()
-    await callHook('directus:loggedIn', false)
+    await callHook('auth:loggedIn', false)
     user.value = null
     _accessToken.clear()
+    _expires.clear()
     _loggedIn.set(false)
     clearNuxtData()
     await navigateTo(config.auth.redirect.logout)

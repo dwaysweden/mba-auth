@@ -12,10 +12,11 @@ interface Graphql {
 interface Authentication {
   enabled: true
   userFields?: string[]
-  cookieSecure?: boolean
+  cookieSecure: boolean
   enableGlobalAuthMiddleware: boolean
   refreshTokenCookieName?: string
   accessTokenCookieName?: string
+  expiresCookieName?: string
   msRefreshBeforeExpires?: number
   redirect: {
     login: string

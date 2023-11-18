@@ -7,7 +7,7 @@ declare module '#app' {
     }
   }
   interface RuntimeNuxtHooks {
-    'directus:loggedIn': (state: boolean) => void
+    'auth:loggedIn': (state: boolean) => void
   }
 }
 
