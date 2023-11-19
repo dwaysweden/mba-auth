@@ -7,8 +7,6 @@
 
 New Nuxt module for authentication between nuxt and directus.
 
-!! DEVELOPMENT TO MAKE IT WORK WITH SELF-SIGNED CERTIFICATED YOU NEED TO ADD NODE_TLS_REJECT_UNAUTHORIZED='0' IN YOUR NUXT .ENV FILE AND REMEMBER TO REMOVE THIS IN PRODUCTION.
-
 - [✨ &nbsp;Release Notes](/CHANGELOG.md)
   <!-- - [🏀 Online playground](https://stackblitz.com/github/your-org/my-module?file=playground%2Fapp.vue) -->
   <!-- - [📖 &nbsp;Documentation](https://example.com) -->
@@ -46,6 +44,8 @@ export default defineNuxtConfig({
 That's it! You can now use mba-auth in your Nuxt app ✨
 
 ## Development
+
+#### TO MAKE IT WORK WITH SELF-SIGNED CERTIFICATED YOU NEED TO ADD NODE_TLS_REJECT_UNAUTHORIZED='0' IN YOUR NUXT .ENV FILE DONT FORGET TO REMOVE THIS IN PRODUCTION.
 
 ```bash
 # Install dependencies
