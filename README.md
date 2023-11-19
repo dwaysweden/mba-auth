@@ -1,12 +1,3 @@
-<!--
-Get your module up and running quickly.
-
-Find and replace all on all files (CMD+SHIFT+F):
-- Name: My Module
-- Package name: my-module
-- Description: My new Nuxt module
--->
-
 # mba-auth
 
 [![npm version][npm-version-src]][npm-version-href]
@@ -15,6 +6,8 @@ Find and replace all on all files (CMD+SHIFT+F):
 [![Nuxt][nuxt-src]][nuxt-href]
 
 New Nuxt module for authentication between nuxt and directus.
+
+!! DEVELOPMENT TO MAKE IT WORK WITH SELF-SIGNED CERTIFICATED YOU NEED TO ADD NODE_TLS_REJECT_UNAUTHORIZED='0' IN YOUR NUXT .ENV FILE AND REMEMBER TO REMOVE THIS IN PRODUCTION.
 
 - [✨ &nbsp;Release Notes](/CHANGELOG.md)
   <!-- - [🏀 Online playground](https://stackblitz.com/github/your-org/my-module?file=playground%2Fapp.vue) -->
