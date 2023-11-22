@@ -25,7 +25,11 @@ export default function useDirectusAuth<DirectusSchema extends object>() {
 
   const { _accessToken, _loggedIn, _expires } = useDirectusSession()
 
-  async function login(email: string, password: string, otp?: string) {
+  async function login(
+    email: string,
+    password: string,
+    otp?: string
+  ): Promise<void> {
     const { data } = await $fetch<AuthenticationData>('/auth/login', {
       baseURL: config.rest.baseUrl,
       method: 'POST',
@@ -56,6 +60,7 @@ export default function useDirectusAuth<DirectusSchema extends object>() {
       // @ts-ignore
       user.value = await useDirectusRest(readMe({ fields }))
     } catch (error) {
+      // console.error(error)
       user.value = null
     }
   }

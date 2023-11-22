@@ -3,14 +3,14 @@ export default defineNuxtConfig({
   modules: ['../src/module'],
   directus: {
     rest: {
-      baseUrl: 'https://albyhills.test/Api',
-      nuxtBaseUrl: 'https://albyhills.test'
+      baseUrl: 'http://127.0.0.1:8055',
+      nuxtBaseUrl: 'http://127.0.0.1:3000'
     },
     auth: {
       enabled: true,
       enableGlobalAuthMiddleware: true,
       userFields: ['*'],
-      cookieSecure: true,
+      cookieSecure: false,
       redirect: {
         home: '/',
         login: '/auth/login',

@@ -13,6 +13,7 @@ import {
   useState,
   useCookie,
   useRequestHeaders,
+  clearNuxtData,
   navigateTo
 } from '#imports'
 
@@ -77,7 +78,8 @@ export default function () {
   }
 
   const _refreshToken = {
-    get: () => process.server && getCookie(event, refreshTokenCookieName)
+    get: () => process.server && getCookie(event, refreshTokenCookieName),
+    clear: () => process.server && deleteCookie(event, refreshTokenCookieName)
   }
 
   const _loggedIn = {
@@ -86,7 +88,7 @@ export default function () {
       process.client && localStorage.setItem(loggedInName, value.toString())
   }
 
-  async function refresh() {
+  const refresh = async () => {
     const isRefreshOn = useState('auth-refresh-loading', () => false)
     const user = useState('user')
 
@@ -98,8 +100,8 @@ export default function () {
 
     const cookie = useRequestHeaders(['cookie']).cookie || ''
 
-    await $fetch
-      .raw<AuthenticationData>('/auth/refresh', {
+    try {
+      const res = await $fetch.raw<AuthenticationData>('/auth/refresh', {
         baseURL: config.rest.baseUrl,
         method: 'POST',
         credentials: 'include',
@@ -110,29 +112,33 @@ export default function () {
           cookie
         }
       })
-      .then((res) => {
-        const setCookie = res.headers.get('set-cookie') || ''
-        const cookies = splitCookiesString(setCookie)
-        for (const cookie of cookies) {
-          appendResponseHeader(event, 'set-cookie', cookie)
-        }
-        if (res._data) {
-          _accessToken.set(res._data?.data.access_token)
-          _expires.set(res._data?.data.expires)
-          _loggedIn.set(true)
-        }
-        isRefreshOn.value = false
-        return res
-      })
-      .catch(async () => {
-        isRefreshOn.value = false
-        _accessToken.clear()
-        _loggedIn.set(false)
-        user.value = null
-        if (process.client) {
-          await navigateTo(config.auth.redirect.logout)
-        }
-      })
+
+      const setCookie = res.headers.get('set-cookie') || ''
+      const cookies = splitCookiesString(setCookie)
+      for (const cookie of cookies) {
+        appendResponseHeader(event, 'set-cookie', cookie)
+      }
+
+      if (res._data) {
+        _accessToken.set(res._data?.data.access_token)
+        _expires.set(res._data?.data.expires)
+        _loggedIn.set(true)
+      }
+
+      isRefreshOn.value = false
+      return res
+    } catch (e) {
+      isRefreshOn.value = false
+      _accessToken.clear()
+      _expires.clear()
+      _loggedIn.set(false)
+      user.value = null
+      clearNuxtData()
+
+      if (process.client) {
+        await navigateTo(config.auth.redirect.logout)
+      }
+    }
   }
 
   async function getToken(): Promise<string | null | undefined> {
