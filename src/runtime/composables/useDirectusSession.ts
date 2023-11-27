@@ -1,4 +1,5 @@
 import { jwtDecode } from 'jwt-decode'
+import Cookies from 'js-cookie'
 import {
   deleteCookie,
   getCookie,
@@ -11,9 +12,7 @@ import {
   useRequestEvent,
   useRuntimeConfig,
   useState,
-  useCookie,
   useRequestHeaders,
-  clearNuxtData,
   navigateTo
 } from '#imports'
 
@@ -23,36 +22,35 @@ export default function () {
 
   const accessTokenCookieName = config.auth.accessTokenCookieName
   const refreshTokenCookieName = config.auth.refreshTokenCookieName
-  const msRefreshBeforeExpires = config.auth.msRefreshBeforeExpires
   const expiresCookieName = config.auth.expiresCookieName
-  const loggedInName = 'auth_logged_in'
-
-  const accessTokenCookie = useCookie(accessTokenCookieName, {
-    sameSite: 'lax',
-    secure: config.auth.cookieSecure ?? true
-  })
-
-  const expiresCookie = useCookie(expiresCookieName, {
-    sameSite: 'lax',
-    secure: config.auth.cookieSecure ?? true
-  })
+  const msRefreshBeforeExpires = config.auth.msRefreshBeforeExpires
+  const loggedInName = 'logged_in'
 
   const _accessToken = {
     get: () =>
       process.server
-        ? event.context[accessTokenCookieName] || accessTokenCookie.value
-        : accessTokenCookie.value,
+        ? event.context[accessTokenCookieName] ||
+          getCookie(event, accessTokenCookieName)
+        : Cookies.get(accessTokenCookieName),
     set: (value: string) => {
       if (process.server) {
         event.context[accessTokenCookieName] = value
+        setCookie(event, accessTokenCookieName, value, {
+          sameSite: 'lax',
+          secure: config.auth.cookieSecure ?? true
+        })
+      } else {
+        Cookies.set(accessTokenCookieName, value, {
+          sameSite: 'lax',
+          secure: config.auth.cookieSecure ?? true
+        })
       }
-      accessTokenCookie.value = value
     },
     clear: () => {
       if (process.server) {
         deleteCookie(event, accessTokenCookieName)
       } else {
-        accessTokenCookie.value = null
+        Cookies.remove(accessTokenCookieName)
       }
     }
   }
@@ -60,19 +58,28 @@ export default function () {
   const _expires = {
     get: () =>
       process.server
-        ? event.context[expiresCookieName] || expiresCookie.value
-        : expiresCookie.value,
+        ? event.context[expiresCookieName] ||
+          getCookie(event, expiresCookieName)
+        : Cookies.get(expiresCookieName),
     set: (value: number) => {
       if (process.server) {
         event.context[expiresCookieName] = value.toString()
+        setCookie(event, expiresCookieName, value.toString(), {
+          sameSite: 'lax',
+          secure: config.auth.cookieSecure ?? true
+        })
+      } else {
+        Cookies.set(expiresCookieName, value.toString(), {
+          sameSite: 'lax',
+          secure: config.auth.cookieSecure ?? true
+        })
       }
-      expiresCookie.value = value.toString()
     },
     clear: () => {
       if (process.server) {
         deleteCookie(event, expiresCookieName)
       } else {
-        expiresCookie.value = null
+        Cookies.remove(expiresCookieName)
       }
     }
   }
@@ -88,7 +95,7 @@ export default function () {
       process.client && localStorage.setItem(loggedInName, value.toString())
   }
 
-  const refresh = async () => {
+  async function refresh() {
     const isRefreshOn = useState('auth-refresh-loading', () => false)
     const user = useState('user')
 
@@ -100,8 +107,8 @@ export default function () {
 
     const cookie = useRequestHeaders(['cookie']).cookie || ''
 
-    try {
-      const res = await $fetch.raw<AuthenticationData>('/auth/refresh', {
+    await $fetch
+      .raw<AuthenticationData>('/auth/refresh', {
         baseURL: config.rest.baseUrl,
         method: 'POST',
         credentials: 'include',
@@ -112,33 +119,30 @@ export default function () {
           cookie
         }
       })
-
-      const setCookie = res.headers.get('set-cookie') || ''
-      const cookies = splitCookiesString(setCookie)
-      for (const cookie of cookies) {
-        appendResponseHeader(event, 'set-cookie', cookie)
-      }
-
-      if (res._data) {
-        _accessToken.set(res._data?.data.access_token)
-        _expires.set(res._data?.data.expires)
-        _loggedIn.set(true)
-      }
-
-      isRefreshOn.value = false
-      return res
-    } catch (e) {
-      isRefreshOn.value = false
-      _accessToken.clear()
-      _expires.clear()
-      _loggedIn.set(false)
-      user.value = null
-      clearNuxtData()
-
-      if (process.client) {
-        await navigateTo(config.auth.redirect.logout)
-      }
-    }
+      .then((res) => {
+        const setCookie = res.headers.get('set-cookie') || ''
+        const cookies = splitCookiesString(setCookie)
+        for (const cookie of cookies) {
+          appendResponseHeader(event, 'set-cookie', cookie)
+        }
+        if (res._data) {
+          _accessToken.set(res._data?.data.access_token)
+          _expires.set(res._data?.data.expires)
+          _loggedIn.set(true)
+        }
+        isRefreshOn.value = false
+        return res
+      })
+      .catch(async () => {
+        isRefreshOn.value = false
+        _accessToken.clear()
+        _expires.clear()
+        _loggedIn.set(false)
+        user.value = null
+        if (process.client) {
+          await navigateTo(config.auth.redirect.logout)
+        }
+      })
   }
 
   async function getToken(): Promise<string | null | undefined> {
@@ -157,5 +161,5 @@ export default function () {
     return expires < Date.now()
   }
 
-  return { refresh, getToken, _accessToken, _refreshToken, _loggedIn, _expires }
+  return { refresh, getToken, _accessToken, _expires, _refreshToken, _loggedIn }
 }

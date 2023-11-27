@@ -7,47 +7,50 @@ import {
   useRuntimeConfig,
   useState,
   useDirectusAuth,
+  useRoute,
   useDirectusSession,
   useNuxtApp
 } from '#imports'
-
-// Hjälpfunktion för att hämta användare och sätta loggedIn-status
-async function fetchUserAndSetLoggedIn() {
-  const { _loggedIn, _refreshToken, _accessToken, refresh } =
-    useDirectusSession()
-
-  if (_accessToken.get()) {
-    await useDirectusAuth().fetchUser()
-    await refresh()
-  } else {
-    const isLoggedIn = _loggedIn.get() === 'true'
-    if (isLoggedIn || _refreshToken.get()) {
-      await refresh()
-      if (_accessToken.get()) {
-        await useDirectusAuth().fetchUser()
-      }
-    }
-  }
-}
 
 export default defineNuxtPlugin(async () => {
   try {
     const config = useRuntimeConfig().public.directus
 
     addRouteMiddleware('common', common, { global: true })
+
     addRouteMiddleware('auth', auth, {
       global: config.auth.enableGlobalAuthMiddleware
     })
+
     addRouteMiddleware('guest', guest)
 
     const initialized = useState('auth-initialized', () => false)
 
+    const { _loggedIn } = useDirectusSession()
+
     if (initialized.value === false) {
-      await fetchUserAndSetLoggedIn()
-      initialized.value = true
+      const { path } = useRoute()
+
+      const { fetchUser } = useDirectusAuth()
+      const { _refreshToken, _accessToken, refresh } = useDirectusSession()
+
+      if (_accessToken.get()) {
+        await fetchUser()
+      } else {
+        const isCallback = path === config.auth.redirect.callback
+        const isLoggedIn = _loggedIn.get() === 'true'
+
+        if (isCallback || isLoggedIn || _refreshToken.get()) {
+          await refresh()
+          if (_accessToken.get()) {
+            await fetchUser()
+          }
+        }
+      }
     }
 
-    const { _loggedIn } = useDirectusSession()
+    initialized.value = true
+
     const { user } = useDirectusAuth()
     const nuxtApp = useNuxtApp()
 
@@ -69,8 +72,5 @@ export default defineNuxtPlugin(async () => {
         }
       }
     })
-  } catch (e) {
-    // Hantera fel
-    // console.error(e)
-  }
+  } catch (e) {}
 })

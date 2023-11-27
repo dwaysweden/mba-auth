@@ -17,13 +17,13 @@ import type { Ref } from '#imports'
 
 export default function useDirectusAuth<DirectusSchema extends object>() {
   const user: Ref<Readonly<DirectusUser<DirectusSchema> | null>> = useState(
-    'user',
+    'auth-user',
     () => null
   )
 
   const config = useRuntimeConfig().public.directus
 
-  const { _accessToken, _loggedIn, _expires } = useDirectusSession()
+  const { _accessToken, _expires, _loggedIn } = useDirectusSession()
 
   async function login(email: string, password: string, otp?: string) {
     const { data } = await $fetch<AuthenticationData>('/auth/login', {
@@ -56,7 +56,6 @@ export default function useDirectusAuth<DirectusSchema extends object>() {
       // @ts-ignore
       user.value = await useDirectusRest(readMe({ fields }))
     } catch (error) {
-      // console.error(error)
       user.value = null
     }
   }
@@ -106,8 +105,8 @@ export default function useDirectusAuth<DirectusSchema extends object>() {
     _accessToken.set(accessToken)
     _expires.set(expires)
     _loggedIn.set(true)
-    await callHook('auth:loggedIn', true)
     await fetchUser()
+    await callHook('auth:loggedIn', true)
     await navigateTo(redirectTo)
   }
 

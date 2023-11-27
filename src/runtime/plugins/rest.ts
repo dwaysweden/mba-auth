@@ -9,7 +9,7 @@ export default defineNuxtPlugin(() => {
   const channel =
     typeof BroadcastChannel === 'undefined'
       ? null
-      : new BroadcastChannel('auth-mba')
+      : new BroadcastChannel('mba-auth')
 
   const config = useRuntimeConfig().public.directus
 

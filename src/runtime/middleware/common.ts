@@ -5,7 +5,7 @@ import {
   useDirectusAuth
 } from '#imports'
 
-export default defineNuxtRouteMiddleware((to, _from) => {
+export default defineNuxtRouteMiddleware((to, from) => {
   const config = useRuntimeConfig().public.directus
 
   if (
@@ -15,7 +15,8 @@ export default defineNuxtRouteMiddleware((to, _from) => {
     const { user } = useDirectusAuth()
 
     if (user.value) {
-      const redirectTo = config.auth.redirect.home
+      const returnToPath = from.query.redirect?.toString()
+      const redirectTo = returnToPath || config.auth.redirect.home
       return navigateTo(redirectTo)
     }
   }
