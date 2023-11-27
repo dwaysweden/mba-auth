@@ -1,6 +1,18 @@
 # Changelog
 
 
+## v1.0.4
+
+[compare changes](https://github.com/dwaysweden/mba-auth/compare/v1.0.3...v1.0.4)
+
+### 🏡 Chore
+
+- **release:** V1.0.3 ([043ccc2](https://github.com/dwaysweden/mba-auth/commit/043ccc2))
+
+### ❤️ Contributors
+
+- Daniel Ohling <daniel.ohling@gmail.com>
+
 ## v1.0.3
 
 [compare changes](https://github.com/dwaysweden/mba-auth/compare/v1.0.0...v1.0.3)
