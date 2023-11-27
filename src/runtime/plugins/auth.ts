@@ -1,8 +1,6 @@
-import type { DirectusUser } from '@directus/sdk'
 import common from '../middleware/common'
 import auth from '../middleware/auth'
 import guest from '../middleware/guest'
-import type { Ref } from '#imports'
 import {
   defineNuxtPlugin,
   addRouteMiddleware,
@@ -10,9 +8,7 @@ import {
   useState,
   useDirectusAuth,
   useDirectusSession,
-  useCookie,
-  watchEffect,
-  computed
+  useNuxtApp
 } from '#imports'
 
 // Hjälpfunktion för att hämta användare och sätta loggedIn-status
@@ -34,19 +30,7 @@ async function fetchUserAndSetLoggedIn() {
   }
 }
 
-// Hjälpfunktion för att hantera accessTokenCookie-ändringar
-function handleAccessTokenCookieChange(
-  newValue: string | undefined,
-  oldValue: string | undefined,
-  user: Ref<Readonly<DirectusUser<DirectusSchema> | null>>,
-  _onLogout: () => void
-): void {
-  if (user.value && !newValue && oldValue) {
-    _onLogout()
-  }
-}
-
-export default defineNuxtPlugin(async (nuxtApp) => {
+export default defineNuxtPlugin(async () => {
   try {
     const config = useRuntimeConfig().public.directus
 
@@ -64,7 +48,8 @@ export default defineNuxtPlugin(async (nuxtApp) => {
     }
 
     const { _loggedIn } = useDirectusSession()
-    const { user, _onLogout } = useDirectusAuth()
+    const { user } = useDirectusAuth()
+    const nuxtApp = useNuxtApp()
 
     if (user.value) {
       _loggedIn.set(true)
@@ -73,19 +58,16 @@ export default defineNuxtPlugin(async (nuxtApp) => {
       _loggedIn.set(false)
     }
 
-    const accessTokenCookie = useCookie(config.auth.accessTokenCookieName)
+    nuxtApp.hook('app:mounted', () => {
+      const channel = nuxtApp.$directus.channel
 
-    const accessTokenCookieRef = computed(
-      () => accessTokenCookie.value || undefined
-    )
-
-    watchEffect(() => {
-      handleAccessTokenCookieChange(
-        accessTokenCookieRef.value,
-        undefined,
-        user,
-        _onLogout
-      )
+      if (channel) {
+        channel.onmessage = (event) => {
+          if (event.data === 'logout' && user.value) {
+            useDirectusAuth()._onLogout()
+          }
+        }
+      }
     })
   } catch (e) {
     // Hantera fel
