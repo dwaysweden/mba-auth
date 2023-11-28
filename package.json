@@ -1,6 +1,6 @@
 {
   "name": "@digitalway/mba-auth",
-  "version": "1.0.5",
+  "version": "1.0.6",
   "description": "Nuxt module for authentication",
   "repository": "https://github.com/dwaysweden/mba-auth.git",
   "license": "MIT",
