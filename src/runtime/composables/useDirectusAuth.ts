@@ -15,9 +15,9 @@ import {
 
 import type { Ref } from '#imports'
 
-export default function useDirectusAuth<DirectusSchema extends object>() {
+export function useDirectusAuth<DirectusSchema extends object>() {
   const user: Ref<Readonly<DirectusUser<DirectusSchema> | null>> = useState(
-    'auth-user',
+    'directus-user',
     () => null
   )
 
@@ -98,27 +98,32 @@ export default function useDirectusAuth<DirectusSchema extends object>() {
   }
 
   async function _onLogin(accessToken: string, expires: number) {
+    _accessToken.set(accessToken)
+    _expires.set(expires)
+    await fetchUser()
+    if (user.value === null) {
+      return
+    }
     const route = useRoute()
     const { callHook } = useNuxtApp()
     const returnToPath = route.query.redirect?.toString()
     const redirectTo = returnToPath ?? config.auth.redirect.home
-    _accessToken.set(accessToken)
-    _expires.set(expires)
     _loggedIn.set(true)
-    await fetchUser()
     await callHook('auth:loggedIn', true)
     await navigateTo(redirectTo)
   }
 
   async function _onLogout() {
-    const { callHook, $directus } = useNuxtApp()
+    if (user.value === null) {
+      return
+    }
+    const { callHook } = useNuxtApp()
     await callHook('auth:loggedIn', false)
     user.value = null
     _accessToken.clear()
     _expires.clear()
     _loggedIn.set(false)
     clearNuxtData()
-    $directus.channel?.postMessage('logout')
     await navigateTo(config.auth.redirect.logout)
   }
 
@@ -130,6 +135,7 @@ export default function useDirectusAuth<DirectusSchema extends object>() {
     requestPasswordReset,
     resetPassword,
     _onLogout,
+    _onLogin,
     user
   }
 }

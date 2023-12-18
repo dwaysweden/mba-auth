@@ -41,6 +41,7 @@ export default defineNuxtModule<ModuleOptions>({
       refreshTokenCookieName: 'auth_refresh_token',
       accessTokenCookieName: 'auth_token',
       expiresCookieName: 'auth_expires',
+      loggedInFlagName: 'auth_logged_in',
       redirect: {
         home: '/',
         login: '/auth/login',

@@ -4,7 +4,8 @@ import {
   deleteCookie,
   getCookie,
   splitCookiesString,
-  appendResponseHeader
+  appendResponseHeader,
+  setCookie
 } from 'h3'
 
 import type { AuthenticationData } from '../types'
@@ -16,7 +17,7 @@ import {
   navigateTo
 } from '#imports'
 
-export default function () {
+export function useDirectusSession() {
   const event = useRequestEvent()
   const config = useRuntimeConfig().public.directus
 
@@ -24,7 +25,7 @@ export default function () {
   const refreshTokenCookieName = config.auth.refreshTokenCookieName
   const expiresCookieName = config.auth.expiresCookieName
   const msRefreshBeforeExpires = config.auth.msRefreshBeforeExpires
-  const loggedInName = 'logged_in'
+  const loggedInName = config.auth.loggedInFlagName
 
   const _accessToken = {
     get: () =>
@@ -105,7 +106,7 @@ export default function () {
 
     isRefreshOn.value = true
 
-    const cookie = useRequestHeaders(['cookie']).cookie || ''
+    const headers = useRequestHeaders(['cookie'])
 
     await $fetch
       .raw<AuthenticationData>('/auth/refresh', {
@@ -115,9 +116,7 @@ export default function () {
         body: {
           mode: 'cookie'
         },
-        headers: {
-          cookie
-        }
+        headers
       })
       .then((res) => {
         const setCookie = res.headers.get('set-cookie') || ''
@@ -136,6 +135,7 @@ export default function () {
       .catch(async () => {
         isRefreshOn.value = false
         _accessToken.clear()
+        _refreshToken.clear()
         _expires.clear()
         _loggedIn.set(false)
         user.value = null
@@ -156,8 +156,8 @@ export default function () {
   }
 
   function isTokenExpired(token: string) {
-    const decoded = jwtDecode(token) as { exp: number }
-    const expires = decoded.exp * 1000 - msRefreshBeforeExpires
+    const decoded = jwtDecode(token)
+    const expires = decoded.exp! * 1000 - msRefreshBeforeExpires
     return expires < Date.now()
   }
 

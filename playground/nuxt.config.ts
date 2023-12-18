@@ -14,6 +14,7 @@ export default defineNuxtConfig({
       refreshTokenCookieName: 'auth_refresh_token',
       accessTokenCookieName: 'auth_token',
       expiresCookieName: 'auth_expires',
+      loggedInFlagName: 'auth_logged_in',
       userFields: [
         'id',
         'avatar',

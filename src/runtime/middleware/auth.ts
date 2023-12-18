@@ -10,7 +10,9 @@ export default defineNuxtRouteMiddleware((to) => {
 
   if (
     to.path === config.auth.redirect.login ||
-    to.path === config.auth.redirect.callback
+    to.path === config.auth.redirect.callback ||
+    to.path === config.auth.redirect.requestPassword ||
+    to.path === config.auth.redirect.resetPassword
   ) {
     return
   }

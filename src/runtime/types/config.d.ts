@@ -17,6 +17,7 @@ interface Authentication {
   refreshTokenCookieName?: string
   accessTokenCookieName?: string
   expiresCookieName?: string
+  loggedInFlagName?: string
   msRefreshBeforeExpires?: number
   redirect: {
     login: string

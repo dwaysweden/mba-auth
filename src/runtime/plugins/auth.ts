@@ -30,7 +30,6 @@ export default defineNuxtPlugin(async () => {
 
     if (initialized.value === false) {
       const { path } = useRoute()
-
       const { fetchUser } = useDirectusAuth()
       const { _refreshToken, _accessToken, refresh } = useDirectusSession()
 
@@ -62,15 +61,20 @@ export default defineNuxtPlugin(async () => {
     }
 
     nuxtApp.hook('app:mounted', () => {
-      const channel = nuxtApp.$directus.channel
+      addEventListener('storage', (event) => {
+        const loggedInName = config.auth.loggedInFlagName
 
-      if (channel) {
-        channel.onmessage = (event) => {
-          if (event.data === 'logout' && user.value) {
+        if (event.key === loggedInName) {
+          if (event.oldValue === 'true' && event.newValue === 'false') {
             useDirectusAuth()._onLogout()
+          } else if (event.oldValue === 'false' && event.newValue === 'true') {
+            const accessToken = useDirectusSession()._accessToken.get()
+            if (accessToken) {
+              useDirectusAuth()._onLogin(accessToken)
+            }
           }
         }
-      }
+      })
     })
   } catch (e) {}
 })
