@@ -69,8 +69,9 @@ export default defineNuxtPlugin(async () => {
             useDirectusAuth()._onLogout()
           } else if (event.oldValue === 'false' && event.newValue === 'true') {
             const accessToken = useDirectusSession()._accessToken.get()
+            const expires = useDirectusSession()._expires.get()
             if (accessToken) {
-              useDirectusAuth()._onLogin(accessToken)
+              useDirectusAuth()._onLogin(accessToken, expires)
             }
           }
         }
